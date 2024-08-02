@@ -30,13 +30,13 @@ namespace Repository
       public Owner GetOwnerWithDetails(Guid ownerId) {
 
 
-         /*         return FindByCondition(owner => owner.Id.Equals(ownerId))
-                     .Include(ac => ac.Accounts)
-                     .FirstOrDefault();*/
+         return FindByCondition(owner => owner.Id.Equals(ownerId))
+            .Include(ac => ac.Accounts)
+            .FirstOrDefault();
 
-         return RepositoryContext.Owners
-           .Include(o => o.Accounts) // Assuming Owner has a navigation property Accounts
-           .FirstOrDefault(o => o.Id == ownerId);
+         /*         return RepositoryContext.Owners
+                    .Include(o => o.Accounts) // Assuming Owner has a navigation property Accounts
+                    .FirstOrDefault(o => o.Id == ownerId);*/
 
       }
 

@@ -84,7 +84,7 @@ namespace AccountOwnerServer.Controllers
             {
                _logger.LogInfo($"Returned owner with details for id: {id}");
 
-               var ownerResult = _mapper.Map<OwnerDto>(owner); //<-
+               var ownerResult = _mapper.Map<OwnerDto>(owner);
                return Ok(ownerResult);
 
             }
@@ -188,6 +188,108 @@ namespace AccountOwnerServer.Controllers
             }
 
             _repository.Owner.DeleteOwner(owner);
+            _repository.Save();
+
+            return NoContent();
+         }
+         catch (Exception ex)
+         {
+            _logger.LogError($"Something went wrong inside DeleteOwner action: {ex.Message}");
+            return StatusCode(500, "Internal server error");
+         }
+      }
+
+      [HttpPost("{id}/account")]
+      public IActionResult CreateAccount(Guid id, [FromBody] AccountForCreationDto account)
+      {
+         try
+         {
+            var owner = _repository.Owner.GetOwnerById(id);
+            if (owner is null)
+            {
+               _logger.LogError($"Owner with id: {id}, hasn't been found in db.");
+               return NotFound();
+
+            }
+            else
+            {
+               var accountEntity = _mapper.Map<Account>(account);
+               _repository.Account.CreateAccount(accountEntity);
+
+               var createdAcount = _mapper.Map<Account>(accountEntity);
+
+               if (owner.Accounts == null)
+               {
+                  owner.Accounts = new List<Account>();
+               }
+
+               owner.Accounts.Add(createdAcount);
+               _repository.Owner.Update(owner);
+               _repository.Save();
+
+               var ownerResult = _mapper.Map<OwnerDto>(owner);
+               return Ok(ownerResult);
+            }
+         }
+         catch (Exception ex)
+         {
+            _logger.LogError($"Something went wrong inside CreateOwner action: {ex.Message}");
+            return StatusCode(500, "Internal server error");
+         }
+      }
+
+      [HttpPut("account/{id}")]
+      public IActionResult UpdateAccount(Guid id, [FromBody] AccountForUpdateDto account)
+      {
+         try
+         {
+
+            if (account is null)
+            {
+               _logger.LogError("Account object sent from client is null.");
+               return BadRequest("Account object is null");
+            }
+            if (!ModelState.IsValid)
+            {
+               _logger.LogError("Invalid account object sent from client.");
+               return BadRequest("Invalid model object");
+            }
+
+            var accountEntity = _repository.Account.GetAccountById(id);
+            if (accountEntity is null)
+            {
+               _logger.LogError($"Owner with id: {id}, hasn't been found in db.");
+               return NotFound();
+
+            }
+
+            _mapper.Map(account, accountEntity);
+            _repository.Account.UpdateAccount(accountEntity);
+            _repository.Save();
+
+            return NoContent();
+
+         }
+         catch (Exception ex)
+         {
+            _logger.LogError($"Something went wrong inside CreateOwner action: {ex.Message}");
+            return StatusCode(500, "Internal server error");
+         }
+      }
+
+      [HttpDelete("account/{id}")]
+      public IActionResult DeleteAccount(Guid id)
+      {
+         try
+         {
+            var account = _repository.Account.GetAccountById(id);
+            if (account == null)
+            {
+               _logger.LogError($"Account with id: {id}, hasn't been found in db.");
+               return NotFound();
+            }
+
+            _repository.Account.DeleteAccount(account);
             _repository.Save();
 
             return NoContent();
